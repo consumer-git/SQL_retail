@@ -2091,17 +2091,80 @@ order by
 limit 1         
 	
         
--- Average expense by sentiment (some attribute) 
+-- Average revenue by city 
+
+select 
+	cty, 
+    round(avg(totalsalesrev),2) as avgsalesPrCity
+from     
+(
+select 
+	bd.city as cty, 
+    pi.sale_price, 
+    pi.product_name as prod_title, 
+    opm.quantity_ordered, 
+    round(pi.sale_price*opm.quantity_ordered,2) as totalsalesrev
+    
+from 
+	branch_details as bd 
+inner join
+	sales_fact as sf	
+on 
+	bd.store_id=sf.store_id 	
+inner join
+		order_product_mapping as opm
+on
+	opm.order_id=sf.order_id	
+inner join
+		product_info as pi 
+on
+	pi.product_id=opm.product_id	
+) a  
+group by
+		cty 
+order by 
+		2 desc 	
 
 
--- sales over x months 
+-- growth sales of DietCoke over 12 months for mumbai city in 2020
 
-        
-		
-		
-	
+select
 
-
+	prod_title, 
+    sum(totalsalesrev) as month_revenue,
+	round(((totalsalesrev-(lag(sum(totalsalesrev),1) over(order by monthoforder)) )/ totalsalesrev)*100,2) as Percent_grwth_ovr_prv_mnth
+from     
+ (
+select 
+	bd.city as cty, 
+    pi.sale_price, 
+    month(sf.order_date) as monthoforder, 
+    year(sf.order_date) as yearoforder, 
+    pi.product_name as prod_title, 
+    opm.quantity_ordered, 
+    round(pi.sale_price*opm.quantity_ordered,2) as totalsalesrev
+    
+from 
+	branch_details as bd 
+inner join
+	sales_fact as sf	
+on 
+	bd.store_id=sf.store_id 	
+inner join
+		order_product_mapping as opm
+on
+	opm.order_id=sf.order_id	
+inner join
+		product_info as pi 
+on
+	pi.product_id=opm.product_id	
+where 
+	year(sf.order_date)=2020 	
+) a		
+where 
+	prod_title='Coca-Cola Diet Coke (Can)'
+group by
+	 prod_title, totalsalesrev, monthoforder
 
 
 
